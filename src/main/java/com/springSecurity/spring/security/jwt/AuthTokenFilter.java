@@ -47,7 +47,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        }else{
+            out.println("JWT is null or invalid");
         }
+
         }catch(Exception e){
             out.println("Cannot set user authetnicatino"+e.getMessage());
 
@@ -61,9 +64,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     }
     private String parseJwt(HttpServletRequest request){
         String jwt = jwtUtils.getJwtFromHeader(request);
-
         out.println("JWT: "+jwt);
-
         return  jwt;
     }
 }
