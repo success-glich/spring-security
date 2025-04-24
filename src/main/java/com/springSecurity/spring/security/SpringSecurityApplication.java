@@ -14,24 +14,6 @@ public class SpringSecurityApplication {
 		SpringApplication.run(SpringSecurityApplication.class, args);
 	}
 
-
-
-	@GetMapping("/hello")
-	public String hello() {
-		return "Hello World";
-	}
-	@PreAuthorize("hasRole('USER')")
-	@GetMapping("/user")
-	public String users() {
-		return "Hello User";
-	}
-
-
-	@PreAuthorize("hasRole('ADMIN')")
-	@GetMapping("/admin")
-	public String admins() {
-		return "Hello Admin";
-	}
 }
 
 

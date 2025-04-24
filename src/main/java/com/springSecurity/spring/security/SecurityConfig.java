@@ -40,33 +40,33 @@ public class SecurityConfig {
     private AuthEntryPointJwt unauthorizedHandler;
 
     @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
+    public AuthTokenFilter authenticationJwtTokenFilter() {return new AuthTokenFilter();}
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-
-
         http.authorizeHttpRequests(authorizeRequests ->
-                authorizeRequests
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/auth/signin").permitAll()
-                        .anyRequest().authenticated()
+                authorizeRequests.requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/signin").permitAll()
+                        .requestMatchers("/hello").permitAll()
+                        .anyRequest().authenticated());
+        http.sessionManagement(
+                session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS)
         );
-
-        http.csrf(AbstractHttpConfigurer::disable);
-        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-
         http.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler));
+        //http.httpBasic(withDefaults());
+        http.headers(headers -> headers
+                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin
+                )
+        );
+        http.csrf(AbstractHttpConfigurer::disable);
+        http.addFilterBefore(authenticationJwtTokenFilter(),
+                UsernamePasswordAuthenticationFilter.class);
 
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
         return http.build();
     }
-
 
     @Bean
     public UserDetailsService userDetailsService(DataSource dataSource){
@@ -97,7 +97,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
 
