@@ -1,11 +1,16 @@
 package com.springSecurity.spring.security.config;
 
+import com.springSecurity.spring.security.TokenBlacklistService;
 import com.springSecurity.spring.security.jwt.AuthEntryPointJwt;
 import com.springSecurity.spring.security.jwt.AuthTokenFilter;
+import com.springSecurity.spring.security.jwt.CustomAccessDeniedHandler;
+import com.springSecurity.spring.security.jwt.JwtUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -35,7 +40,16 @@ public class SecurityConfig {
     DataSource dataSource;
 
     @Autowired
+    JwtUtils jwtUtils;
+
+    @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
+
+    @Autowired
+    CustomAccessDeniedHandler accessDeniedHandler;
+
+    @Autowired
+    private TokenBlacklistService blacklistService;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {return new AuthTokenFilter();}
@@ -43,11 +57,12 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
 
-
         http.authorizeHttpRequests(authorizeRequests ->
+
                 authorizeRequests.requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
                         .requestMatchers("/signin").permitAll()
-                        .requestMatchers("/api/ auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/hello").permitAll()
                         .anyRequest().authenticated());
         http.sessionManagement(
@@ -55,7 +70,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS)
         );
-        http.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler));
+        http.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler).accessDeniedHandler(accessDeniedHandler));
         //http.httpBasic(withDefaults());
         http.headers(headers -> headers
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin
@@ -66,7 +81,43 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class);
 
 
+
+        http.cors(cors->cors.configurationSource(request -> {
+            var config = new org.springframework.web.cors.CorsConfiguration();
+            config.addAllowedOrigin("http://localhost:3000");
+            config.addAllowedOrigin("http://localhost:3001");
+            config.addAllowedOrigin("http://localhost:5173");
+            config.addAllowedMethod("*");
+            config.addAllowedHeader("*");
+            config.setAllowCredentials(true);
+            return config;
+        }));
+        // Add custom logout success handler
+        http.logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    String authHeader = request.getHeader("Authorization");
+                    if(authHeader!=null && authHeader.startsWith("Bearer ")){
+                        String jwt = authHeader.substring(7);
+                        long expiration = jwtUtils.getRemainingExpiration(jwt);
+                        if (expiration > 0) {
+                            blacklistService.blacklistToken(jwt, expiration);
+                        }
+                    }else{
+                        response.setContentType("application/json");
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write("{\"message\": \"Token missing.\", \"status\": false}");
+
+                        return;
+                    }
+                    response.setContentType("application/json");
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.getWriter().write("{\"message\": \"Logout successful\", \"status\": true}");
+                })
+        );
+
         return http.build();
+
     }
 
     @Bean

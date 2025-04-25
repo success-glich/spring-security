@@ -2,6 +2,7 @@ package com.springSecurity.spring.security;
 import com.springSecurity.spring.security.jwt.JwtUtils;
 import com.springSecurity.spring.security.jwt.LoginRequest;
 import com.springSecurity.spring.security.jwt.LoginResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,9 @@ public class GreetingController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private TokenBlacklistService blacklistService;
+
     @GetMapping("/hello")
     public String sayHello(){
         return "Hello";
@@ -52,17 +56,12 @@ public class GreetingController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-
             Map<String, Object> response = new HashMap<>();
             response.put("username", userDetails.getUsername());
-
             response.put("roles", userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList()));
-
             response.put("message", "User profile retrieved successfully");
-
 
             return ResponseEntity.ok(response);
         } else {
@@ -96,4 +95,6 @@ public class GreetingController {
 
         return ResponseEntity.ok(response);
     }
+
+
 }

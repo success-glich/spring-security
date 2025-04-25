@@ -1,5 +1,6 @@
 package com.springSecurity.spring.security.jwt;
 
+import com.springSecurity.spring.security.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,13 +24,17 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private JwtUtils jwtUtils;
 
     @Autowired
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Autowired
     private UserDetailsService userDetailsService;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        return path.startsWith("/signin") || path.startsWith("/hello") || path.startsWith("/h2-console");
+        return path.startsWith("/signin") || path.startsWith("/hello") || path.startsWith("/h2-console") || path.startsWith("/error");
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -39,7 +44,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         System.out.println("header::"+request.getHeaderNames());
         try {
             String jwt = parseJwt(request);
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+            if (jwt != null && jwtUtils.validateJwtToken(jwt) && !tokenBlacklistService.isTokenBlacklisted(jwt)) {
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);

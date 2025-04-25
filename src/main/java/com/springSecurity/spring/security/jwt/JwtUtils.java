@@ -73,4 +73,14 @@ public class JwtUtils {
         }
         return false;
     }
+
+    public  long getRemainingExpiration(String token) {
+        try {
+            Date expirationDate = Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(token).getPayload().getExpiration();
+            return (expirationDate.getTime() - System.currentTimeMillis()) / 1000;
+        } catch (Exception e) {
+            logger.error("Error getting remaining expiration: {}", e.getMessage());
+            return 0;
+        }
+    }
 }
