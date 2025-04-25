@@ -1,4 +1,4 @@
-package com.springSecurity.spring.security;
+package com.springSecurity.spring.security.config;
 
 import com.springSecurity.spring.security.jwt.AuthEntryPointJwt;
 import com.springSecurity.spring.security.jwt.AuthTokenFilter;
@@ -25,8 +25,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import javax.sql.DataSource;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 
 @Configuration
 @EnableWebSecurity
@@ -44,9 +42,12 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+
+
         http.authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests.requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/signin").permitAll()
+                        .requestMatchers("/api/ auth/**").permitAll()
                         .requestMatchers("/hello").permitAll()
                         .anyRequest().authenticated());
         http.sessionManagement(
