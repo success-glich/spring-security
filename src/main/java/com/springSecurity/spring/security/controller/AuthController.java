@@ -1,10 +1,13 @@
 package com.springSecurity.spring.security.controller;
 
 
+import com.springSecurity.spring.security.filter.AuthTokenFilter;
 import com.springSecurity.spring.security.jwt.JwtUtils;
 import com.springSecurity.spring.security.dto.LoginRequest;
 import com.springSecurity.spring.security.dto.LoginResponse;
 import com.springSecurity.spring.security.utils.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping(("/api/auth"))
 public class AuthController {
+    private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
+
 
     @Autowired
     AuthenticationManager authenticationManager;
@@ -38,6 +43,8 @@ public class AuthController {
             authentication= authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
         }catch (Exception ex){
+            logger.error("Authentication failed: {}", ex.getMessage());
+
             return ResponseEntity.status(401).body(new ApiResponse<>(false, "Invalid credentials", null));
         }
 
