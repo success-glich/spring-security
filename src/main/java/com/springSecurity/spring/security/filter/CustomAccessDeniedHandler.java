@@ -1,4 +1,4 @@
-package com.springSecurity.spring.security.jwt;
+package com.springSecurity.spring.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;

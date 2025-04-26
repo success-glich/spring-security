@@ -1,13 +1,13 @@
-package com.springSecurity.spring.security;
+package com.springSecurity.spring.security.controller;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +24,7 @@ public class UserController {
     @Autowired
     DataSource dataSource;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/auth/register")
     public String registerUser(@RequestParam  String username,@RequestParam String password, @RequestParam String role) {
         JdbcUserDetailsManager userDetailsManager  = new JdbcUserDetailsManager(dataSource);

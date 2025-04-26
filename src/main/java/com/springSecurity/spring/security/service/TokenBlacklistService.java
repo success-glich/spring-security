@@ -1,11 +1,10 @@
-package com.springSecurity.spring.security;
+package com.springSecurity.spring.security.service;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import java.sql.Time;
-import java.time.Duration;
+
 import java.util.concurrent.TimeUnit;
 
 @Service

@@ -10,14 +10,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5431:5432"
     networks:
        - 'backend'
   redis:
     image: redis:7
     container_name: my_redis
     ports:
-      - "6379:6379"
+      - "6377:6379"
     volumes:
       - 'redis-data:/data'
     restart: always

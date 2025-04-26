@@ -1,6 +1,7 @@
-package com.springSecurity.spring.security.jwt;
+package com.springSecurity.spring.security.filter;
 
-import com.springSecurity.spring.security.TokenBlacklistService;
+import com.springSecurity.spring.security.service.TokenBlacklistService;
+import com.springSecurity.spring.security.jwt.JwtUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,10 +61,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-
-        // Log the error message
-
-
             logger.error("Cannot set user authentication: {}", e);
         }
 

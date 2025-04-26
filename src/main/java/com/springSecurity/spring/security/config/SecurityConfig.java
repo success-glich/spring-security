@@ -1,9 +1,9 @@
 package com.springSecurity.spring.security.config;
 
-import com.springSecurity.spring.security.TokenBlacklistService;
-import com.springSecurity.spring.security.jwt.AuthEntryPointJwt;
-import com.springSecurity.spring.security.jwt.AuthTokenFilter;
-import com.springSecurity.spring.security.jwt.CustomAccessDeniedHandler;
+import com.springSecurity.spring.security.service.TokenBlacklistService;
+import com.springSecurity.spring.security.filter.AuthEntryPointJwt;
+import com.springSecurity.spring.security.filter.AuthTokenFilter;
+import com.springSecurity.spring.security.filter.CustomAccessDeniedHandler;
 import com.springSecurity.spring.security.jwt.JwtUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +52,9 @@ public class SecurityConfig {
     private TokenBlacklistService blacklistService;
 
     @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {return new AuthTokenFilter();}
+    public AuthTokenFilter authenticationJwtTokenFilter() {
+        return new AuthTokenFilter();
+    }
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -60,16 +62,17 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorizeRequests ->
 
                 authorizeRequests.requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
-                        .requestMatchers("/signin").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/hello").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/public/**").permitAll()
                         .anyRequest().authenticated());
         http.sessionManagement(
                 session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS)
         );
+
         http.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler).accessDeniedHandler(accessDeniedHandler));
         //http.httpBasic(withDefaults());
         http.headers(headers -> headers
@@ -81,8 +84,7 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class);
 
 
-
-        http.cors(cors->cors.configurationSource(request -> {
+        http.cors(cors -> cors.configurationSource(request -> {
             var config = new org.springframework.web.cors.CorsConfiguration();
             config.addAllowedOrigin("http://localhost:3000");
             config.addAllowedOrigin("http://localhost:3001");
@@ -97,17 +99,16 @@ public class SecurityConfig {
                 .logoutUrl("/logout")
                 .logoutSuccessHandler((request, response, authentication) -> {
                     String authHeader = request.getHeader("Authorization");
-                    if(authHeader!=null && authHeader.startsWith("Bearer ")){
+                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
                         String jwt = authHeader.substring(7);
                         long expiration = jwtUtils.getRemainingExpiration(jwt);
                         if (expiration > 0) {
                             blacklistService.blacklistToken(jwt, expiration);
                         }
-                    }else{
+                    } else {
                         response.setContentType("application/json");
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         response.getWriter().write("{\"message\": \"Token missing.\", \"status\": false}");
-
                         return;
                     }
                     response.setContentType("application/json");
@@ -121,9 +122,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(DataSource dataSource){
+    public UserDetailsService userDetailsService(DataSource dataSource) {
         return new JdbcUserDetailsManager(dataSource);
     }
+
     @Bean
     public CommandLineRunner initData(UserDetailsService userDetailsService) {
         return args -> {
@@ -149,7 +151,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 

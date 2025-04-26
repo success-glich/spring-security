@@ -1,4 +1,4 @@
-package com.springSecurity.spring.security.jwt;
+package com.springSecurity.spring.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -23,6 +23,7 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
             throws IOException, ServletException {
+
         logger.error("Unauthorized error: {}", authException.getMessage());
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -31,10 +32,11 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
         final Map<String, Object> body = new HashMap<>();
         body.put("status", HttpServletResponse.SC_UNAUTHORIZED);
         body.put("error", "Unauthorized");
-        body.put("message", authException.getMessage());
+        body.put("message", "unauthorized access!");
         body.put("path", request.getServletPath());
 
         final ObjectMapper mapper = new ObjectMapper();
+
         mapper.writeValue(response.getOutputStream(), body);
     }
 
